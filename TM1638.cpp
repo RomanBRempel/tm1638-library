@@ -122,9 +122,13 @@ byte TM1638::getButtons(void)
   digitalWrite(strobePin, LOW);
   send(0x42);
   for (int i = 0; i < 4; i++) {
-    keys |= receive() << i;
+    byte v = receive();
+    for (int j = 0; j < 8; j++) {
+      if (v & (1 << j)) {
+        keys |= (1 << (i + j * 4));
+      }
+    }
   }
-  digitalWrite(strobePin, HIGH);
 
   return keys;
 }
