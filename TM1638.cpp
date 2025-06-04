@@ -121,14 +121,21 @@ byte TM1638::getButtons(void)
 
   digitalWrite(strobePin, LOW);
   send(0x42);
+
+#if defined(ESP32)
+  // Для ESP32 корректно читаем 4 байта, собираем 8 бит (по 2 бита из каждого байта)
   for (int i = 0; i < 4; i++) {
     byte v = receive();
-    for (int j = 0; j < 8; j++) {
-      if (v & (1 << j)) {
-        keys |= (1 << (i + j * 4));
-      }
-    }
+    keys |= ((v & 0x01) << (i * 2));       // первый бит
+    keys |= (((v >> 1) & 0x01) << (i * 2 + 1)); // второй бит
   }
+#else
+  for (int i = 0; i < 4; i++) {
+    keys |= receive() << i;
+  }
+#endif
+
+  digitalWrite(strobePin, HIGH);
 
   return keys;
 }
